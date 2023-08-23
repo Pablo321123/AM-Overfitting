@@ -19,7 +19,9 @@ def cria_modelo(X: pd.DataFrame, y: pd.Series, min_samples_split: float):
     # ..parametro min_samples_split e random_state=1 - é muito importante manter a seed fixa para
     # ..que os resultados se mantenham sempre os mesmos - reprodutibilidade)
 
-    decision_tree = DecisionTreeClassifier(min_samples_split=min_samples_split, random_state=1)
+    decision_tree = DecisionTreeClassifier(
+        min_samples_split=min_samples_split, random_state=1
+    )
 
     # retone o modelo por meio do método fit
     return decision_tree.fit(X, y)
@@ -35,10 +37,16 @@ def divide_treino_teste(
     Retorna uma tupla com o treino e teste separados
     """
     # 1. obtenha o treino usando o método sample do DataFrame
-    df_treino = None
+    df_treino = df.sample(frac=val_proporcao_treino, random_state=1)
 
     # 2. Para obter o teste, selecione as instancias que estão em df e não estão em df_treino (use o método drop)
-    df_teste = None
+    df_teste = df.drop(df_treino.index)
+
+    # print(df)
+    # print('\n')
+    # print(df_treino)
+    # print('\n')
+    # print(df_teste)
 
     return df_treino, df_teste
 
@@ -58,18 +66,18 @@ def faz_classificacao(
          o resultado retornado pelo método predict do modelo.
         - A acuracia (proporção de exemplos classificados corretamente)
             dicas:
-            * caso tenhamos dois vetores a e b, ao fazer a operção a==b, ele retornará
+            * caso tenhamos dois vetores a e b, ao fazer a operação a==b, ele retornará
             um vetor em que o valor  de cada posição i será igual a verdadeiro caso a==b.
             * np.sum soma os valores de um vetor (considerando True=1 e False=0)
     """
     # cria o modelo (use a função previamente criada)
-    model_dtree = None
+    model_dtree = cria_modelo(x_treino, y_treino, min_samples_split)
 
     # realiza a predição (use o método predict do modelo)
-    y_predicted = None
+    y_predicted = model_dtree.predict(x_teste)
 
     # calcule a acurácia
-    acuracia = None
+    acuracia = np.sum(y_predicted == y_teste) / len(y_teste)
 
     return y_predicted, acuracia
 
@@ -95,9 +103,13 @@ def plot_performance_min_samples(X_treino, y_treino, X_teste, y_teste):
 
     for min_samples in np.arange(0.001, 0.7, 0.01):
         # complete a linha abaixo com a função e parametros corretos para calcular a acurácia no teste
-        y_predicted, ac_teste = None
+        y_predicted, ac_teste = faz_classificacao(
+            X_treino, y_treino, X_teste, y_teste, min_samples
+        )
         # complete a linha abaixo com a função e parametros corretos para calcular a acurácia no treino
-        y_predicted, ac_treino = None
+        y_predicted, ac_treino = faz_classificacao(
+            X_treino, y_treino, X_treino, y_treino, min_samples
+        )
 
         # adiciona a acuracia no treino, no teste e o parametro min_samples
         arr_ac_treino.append(ac_treino)
@@ -105,5 +117,9 @@ def plot_performance_min_samples(X_treino, y_treino, X_teste, y_teste):
         arr_min_samples.append(min_samples)
 
     # plota o resultado
-    plt.plot(arr_min_samples, arr_ac_treino, "b--")
-    plt.plot(arr_min_samples, arr_ac_teste, "r-")
+    plt.xlabel("Min_samples")
+    plt.ylabel("Acurácia")
+    plt.plot(arr_min_samples, arr_ac_treino, "b--", label="Acurácia Treino")
+    plt.plot(arr_min_samples, arr_ac_teste, "r-", label="Acurácia Teste")
+    plt.legend()
+    plt.show()
